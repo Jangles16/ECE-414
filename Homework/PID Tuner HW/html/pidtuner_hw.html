@@ -1,0 +1,354 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>pidtuner_hw</title><meta name="generator" content="MATLAB 9.2"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2018-02-21"><meta name="DC.source" content="pidtuner_hw.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#3">Part 2 - PD Controller</a></li></ul></div><pre class="codeinput"><span class="comment">% %% Joshua Andrews - ECE414 - PID Tuner HW</span>
+<span class="comment">%</span>
+<span class="comment">% %% Part 1, P control</span>
+<span class="comment">% % Testing the PID tuner and PID tune function for a P controller</span>
+<span class="comment">%</span>
+clear <span class="string">all</span>; clc;
+<span class="comment">%</span>
+G = tf(40, [1 30 200])
+<span class="comment">%</span>
+<span class="comment">% %% Find the baseline matlab generated P controller</span>
+<span class="comment">% Cp = pidtune(G, 'P');</span>
+<span class="comment">%</span>
+<span class="comment">% %% Run PID Tuner with plant tf. and the baseline Cp</span>
+<span class="comment">% % Using the GUI the response time can be changed to alter the Kp parameter.</span>
+<span class="comment">% %  Because we are looking at minimizing %OS and controller effort, the</span>
+<span class="comment">% %  contoller effort can be plotted alongside the step response of the</span>
+<span class="comment">% %  system using the tools at the top of the GUI.  The controller parameters</span>
+<span class="comment">% %  is displayed by clicking the button at the top and the controller can be</span>
+<span class="comment">% %  exported to the workspace.</span>
+<span class="comment">%</span>
+<span class="comment">% %% Finding the minimum controller effort</span>
+<span class="comment">% % Using the slider, the lowest %OS and controller effort occured when the</span>
+<span class="comment">% % response time was as slow as possible.  The lowest %OS was found by</span>
+<span class="comment">% % watching the parameters while the lowest controller effort was found by</span>
+<span class="comment">% % displaying the peak by right clicking on the controller effort graph.</span>
+<span class="comment">% % After tuning export it to the workspace as C.</span>
+<span class="comment">%</span>
+<span class="comment">% Tune = pidTuner(G, Cp)</span>
+<span class="comment">% waitfor(Tune);</span>
+<span class="comment">%</span>
+<span class="comment">% %% Export the tuned controller</span>
+<span class="comment">% % The best value of Kp was found to be 5 as it minimzed both parameters.</span>
+<span class="comment">% % The controller effort had a peak of 5 and the %OS was 2.84%</span>
+<span class="comment">%</span>
+<span class="comment">% % Baseline controller effort and system transfer functions</span>
+<span class="comment">% Up = Cp/(1+(Cp*G));</span>
+<span class="comment">% Tp = (Cp*G)/(1+(G*Cp));</span>
+<span class="comment">%</span>
+<span class="comment">% % Tuned controller effort and system transfer functions</span>
+<span class="comment">% Utp = C/(1+(C*G));</span>
+<span class="comment">% Ttp = (C*G)/(1+(G*C));</span>
+<span class="comment">%</span>
+<span class="comment">% %% Ploting the step responses</span>
+<span class="comment">% % Using the transfer functins above the step responses we plotted for each</span>
+<span class="comment">%</span>
+<span class="comment">% figure(1); clf;</span>
+<span class="comment">% step(Tp);</span>
+<span class="comment">% hold on;</span>
+<span class="comment">% step(Ttp);</span>
+<span class="comment">% grid on;</span>
+<span class="comment">% legend('Baseline', 'Tuned');</span>
+<span class="comment">% title('System Step Response');</span>
+<span class="comment">%</span>
+<span class="comment">% figure(2); clf;</span>
+<span class="comment">% step(Up);</span>
+<span class="comment">% hold on;</span>
+<span class="comment">% step(Utp);</span>
+<span class="comment">% grid on;</span>
+<span class="comment">% legend('Baseline', 'Tuned');</span>
+<span class="comment">% title('Contoller Effort Step Response');</span>
+</pre><pre class="codeoutput">
+G =
+ 
+         40
+  ----------------
+  s^2 + 30 s + 200
+ 
+Continuous-time transfer function.
+
+</pre><p>In the graphs above you can see that by only focusing on those two parameters we got a much better response with a longer rise time, which is still fairly low, with the tuned controller.  The peak controller effort also drops from 21 to 5</p><h2 id="3">Part 2 - PD Controller</h2><p>By using the step s above we can do the same process for the PI controller</p><p>The controller effort transfer function is improper for any value of Kd other than 0.  This results in an ideal controller that is not implementable in the real world.  The controller would have to supply impluse outputs and the plant would have to handle impulse inputs.  But in order to get values for Kp and Kd, the controller was tuned based on %OS alone.  This occured when both sliders were taken all the way to the right. (Fast response, robust transient).</p><pre class="codeinput">Cpd = pidtune(G, <span class="string">'PD'</span>);
+Tune = pidTuner(G, Cpd);
+waitfor(Tune);
+disp(<span class="string">'Parameters from PID Tune'</span>);
+disp(<span class="string">'Kp = '</span>);
+disp(C.Kp);
+disp(<span class="string">'Kd = '</span>);
+disp(C.Kd);
+
+<span class="comment">% Baseline controller effort and system transfer functions</span>
+disp(<span class="string">'Baseline Controller Effort Transfer Function'</span>);
+Upd = Cpd/(1+(Cpd*G))
+disp(<span class="string">'Baseline System Transfer Function'</span>);
+Tpd = (Cpd*G)/(1+(G*Cpd))
+
+<span class="comment">% Tuned controller effort and system transfer functions</span>
+disp(<span class="string">'Tuned Controller Effort Transfer Function'</span>);
+Utpd = C/(1+(C*G))
+disp(<span class="string">'Tuned System Transfer Function'</span>);
+Ttpd = (C*G)/(1+(G*C))
+
+
+figure(3); clf;
+step(Tpd);
+hold <span class="string">on</span>;
+step(Ttpd);
+grid <span class="string">on</span>;
+legend(<span class="string">'Baseline'</span>, <span class="string">'Tuned'</span>);
+title(<span class="string">'System Step Response'</span>);
+</pre><pre class="codeoutput">Parameters from PID Tune
+Kp = 
+  875.0647
+
+Kd = 
+   35.3543
+
+Baseline Controller Effort Transfer Function
+
+Upd =
+ 
+  2.656 s^3 + 419 s^2 + 1.071e04 s + 6.787e04
+  -------------------------------------------
+           s^2 + 136.2 s + 1.377e04
+ 
+Continuous-time transfer function.
+
+Baseline System Transfer Function
+
+Tpd =
+ 
+     106.2 s^3 + 1.676e04 s^2 + 4.285e05 s + 2.715e06
+  ------------------------------------------------------
+  s^4 + 166.2 s^3 + 1.806e04 s^2 + 4.405e05 s + 2.755e06
+ 
+Continuous-time transfer function.
+
+Tuned Controller Effort Transfer Function
+
+Utpd =
+ 
+  35.35 s^3 + 1936 s^2 + 3.332e04 s + 1.75e05
+  -------------------------------------------
+            s^2 + 1444 s + 3.52e04
+ 
+Continuous-time transfer function.
+
+Tuned System Transfer Function
+
+Ttpd =
+ 
+     1414 s^3 + 7.743e04 s^2 + 1.333e06 s + 7.001e06
+  -----------------------------------------------------
+  s^4 + 1474 s^3 + 7.873e04 s^2 + 1.345e06 s + 7.041e06
+ 
+Continuous-time transfer function.
+
+</pre><img vspace="5" hspace="5" src="pidtuner_hw_01.png" alt=""> <p>Using the parameters above the %OS was 0.07%.  While the rise time could have been decreased much further, this resulted in a slightly larger overshoot and much more impractical values for Kd and Kp.</p><pre class="codeinput"><span class="comment">% Cpid = pidtune(G, 'PID');</span>
+<span class="comment">% pidTuner(G, Cpid);</span>
+<span class="comment">% Tpid = Cpid/(1+(Cpid*G))</span>
+<span class="comment">%</span>
+<span class="comment">% Cpdf = pidtune(G, 'PDF');</span>
+<span class="comment">% pidTuner(G, Cpdf);</span>
+<span class="comment">% Tpdf = Cpdf/(1+(Cpdf*G))</span>
+<span class="comment">%</span>
+<span class="comment">% Cpidf = pidtune(G, 'PIDF');</span>
+<span class="comment">% pidTuner(G, Cpidf);</span>
+<span class="comment">% Tpidf = Cpidf/(1+(Cpidf*G))</span>
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2017a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+% %% Joshua Andrews - ECE414 - PID Tuner HW
+% 
+% %% Part 1, P control
+% % Testing the PID tuner and PID tune function for a P controller
+% 
+clear all; clc;
+% 
+G = tf(40, [1 30 200])
+% 
+% %% Find the baseline matlab generated P controller
+% Cp = pidtune(G, 'P');
+% 
+% %% Run PID Tuner with plant tf. and the baseline Cp
+% % Using the GUI the response time can be changed to alter the Kp parameter.
+% %  Because we are looking at minimizing %OS and controller effort, the
+% %  contoller effort can be plotted alongside the step response of the
+% %  system using the tools at the top of the GUI.  The controller parameters
+% %  is displayed by clicking the button at the top and the controller can be
+% %  exported to the workspace.
+% 
+% %% Finding the minimum controller effort
+% % Using the slider, the lowest %OS and controller effort occured when the
+% % response time was as slow as possible.  The lowest %OS was found by
+% % watching the parameters while the lowest controller effort was found by
+% % displaying the peak by right clicking on the controller effort graph.
+% % After tuning export it to the workspace as C.
+% 
+% Tune = pidTuner(G, Cp)
+% waitfor(Tune);
+% 
+% %% Export the tuned controller
+% % The best value of Kp was found to be 5 as it minimzed both parameters.
+% % The controller effort had a peak of 5 and the %OS was 2.84%
+% 
+% % Baseline controller effort and system transfer functions
+% Up = Cp/(1+(Cp*G));
+% Tp = (Cp*G)/(1+(G*Cp));
+% 
+% % Tuned controller effort and system transfer functions
+% Utp = C/(1+(C*G));
+% Ttp = (C*G)/(1+(G*C));
+% 
+% %% Ploting the step responses
+% % Using the transfer functins above the step responses we plotted for each
+% 
+% figure(1); clf;
+% step(Tp);
+% hold on;
+% step(Ttp);
+% grid on;
+% legend('Baseline', 'Tuned');
+% title('System Step Response');
+% 
+% figure(2); clf;
+% step(Up);
+% hold on;
+% step(Utp);
+% grid on;
+% legend('Baseline', 'Tuned');
+% title('Contoller Effort Step Response');
+
+%%
+% In the graphs above you can see that by only focusing on those two
+% parameters we got a much better response with a longer rise time, which
+% is still fairly low, with the tuned controller.  The peak controller effort also drops from
+% 21 to 5
+
+
+%% Part 2 - PD Controller
+% By using the step s above we can do the same process for the PI
+% controller
+
+%% 
+% The controller effort transfer function is improper for any value of Kd
+% other than 0.  This results in an ideal controller that is not
+% implementable in the real world.  The controller would have to supply
+% impluse outputs and the plant would have to handle impulse inputs.  But in order to get values for Kp and Kd, the controller was tuned based on %OS alone.  This occured when both sliders were taken all the way to the right. (Fast response, robust transient).    
+
+Cpd = pidtune(G, 'PD');
+Tune = pidTuner(G, Cpd);
+waitfor(Tune);
+disp('Parameters from PID Tune');
+disp('Kp = ');
+disp(C.Kp);
+disp('Kd = ');
+disp(C.Kd);
+
+% Baseline controller effort and system transfer functions
+disp('Baseline Controller Effort Transfer Function');
+Upd = Cpd/(1+(Cpd*G))
+disp('Baseline System Transfer Function');
+Tpd = (Cpd*G)/(1+(G*Cpd))
+
+% Tuned controller effort and system transfer functions
+disp('Tuned Controller Effort Transfer Function');
+Utpd = C/(1+(C*G))
+disp('Tuned System Transfer Function');
+Ttpd = (C*G)/(1+(G*C))
+
+
+figure(3); clf;
+step(Tpd);
+hold on;
+step(Ttpd);
+grid on;
+legend('Baseline', 'Tuned');
+title('System Step Response');
+
+%%
+% Using the parameters above the %OS was 0.07%.  While the rise time
+% could have been decreased much further, this resulted in a slightly
+% larger overshoot and much more impractical values for Kd and Kp.
+
+% Cpid = pidtune(G, 'PID');
+% pidTuner(G, Cpid);
+% Tpid = Cpid/(1+(Cpid*G))
+% 
+% Cpdf = pidtune(G, 'PDF');
+% pidTuner(G, Cpdf);
+% Tpdf = Cpdf/(1+(Cpdf*G))
+% 
+% Cpidf = pidtune(G, 'PIDF');
+% pidTuner(G, Cpidf);
+% Tpidf = Cpidf/(1+(Cpidf*G))
+
+
+##### SOURCE END #####
+--></body></html>

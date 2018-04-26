@@ -1,0 +1,274 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>ECE 414 Homework #2 Redo</title><meta name="generator" content="MATLAB 9.2"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2018-02-01"><meta name="DC.source" content="HW2redo.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>ECE 414 Homework #2 Redo</h1><!--introduction--><p>Josh Andrews</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Question 1</a></li><li><a href="#11">Question 2</a></li><li><a href="#13">Part A</a></li><li><a href="#14">Part B</a></li><li><a href="#15">Part C</a></li></ul></div><h2 id="1">Question 1</h2><p>Analyze standard second order H(s) for Wn=100 and for Z=0.1, 0.5, and 0.9.  Plot the step response.</p><p>Clean everything up before we start</p><pre class="codeinput">clear;
+clc;
+</pre><p>First Set Wn to initial value of 100</p><pre class="codeinput">Wn = 100;
+figure(1); clf;
+</pre><img vspace="5" hspace="5" src="HW2redo_01.png" style="width:560px;height:420px;" alt=""> <p>Now find the transfer function of H(s) for each Z by using a while loop. Also in the while loop plot the step response for each Z, set initially to 0.1</p><p>Also store the step response info for each Z</p><pre class="codeinput">Z = 0.1;
+i = 1;   <span class="comment">% index variable for stepinfo</span>
+
+<span class="keyword">while</span> Z &lt;= 0.9
+    H=tf(Wn.^2, [1 2*Z*Wn Wn.^2]);
+    Hinfo(i) = stepinfo(H);
+    step(H);
+    hold <span class="string">on</span>;
+    Z = Z + 0.4; <span class="comment">% increment Z</span>
+    i = i + 1;
+<span class="keyword">end</span>
+
+legend(<span class="string">'Z = 0.1'</span>, <span class="string">'Z = 0.4'</span>,<span class="string">'Z = 0.9'</span>);
+title(<span class="string">'Step response with constant Wn and three Z cases'</span>);
+</pre><img vspace="5" hspace="5" src="HW2redo_02.png" style="width:560px;height:420px;" alt=""> <p>Now compare the three cases using both the plot above and the step info for each of the three cases shown below</p><p>Z = 0.1</p><pre class="codeinput">disp(Hinfo(1));
+</pre><pre class="codeoutput">        RiseTime: 0.0113
+    SettlingTime: 0.3837
+     SettlingMin: 0.4685
+     SettlingMax: 1.7292
+       Overshoot: 72.9156
+      Undershoot: 0
+            Peak: 1.7292
+        PeakTime: 0.0314
+
+</pre><p>Z = 0.5</p><pre class="codeinput">disp(Hinfo(2));
+</pre><pre class="codeoutput">        RiseTime: 0.0164
+    SettlingTime: 0.0808
+     SettlingMin: 0.9315
+     SettlingMax: 1.1629
+       Overshoot: 16.2929
+      Undershoot: 0
+            Peak: 1.1629
+        PeakTime: 0.0359
+
+</pre><p>Z = 0.9</p><pre class="codeinput">disp(Hinfo(3));
+</pre><pre class="codeoutput">        RiseTime: 0.0288
+    SettlingTime: 0.0470
+     SettlingMin: 0.9024
+     SettlingMax: 1.0015
+       Overshoot: 0.1524
+      Undershoot: 0
+            Peak: 1.0015
+        PeakTime: 0.0721
+
+</pre><p>If Wn is held constant and Z is varied alters all of the step response parameters.  Rise Time and Peak Time are both directly proportional to Z while % Overshoot, Settling Time, and the Peak are inversly proportional. The Settling Max also appeared to be inversely proportional however the min seemed to follow a more parabolic curve.</p><h2 id="11">Question 2</h2><p>Using the same H(s) and constant Wn = 100, let 0.1&lt;=Z&lt;=0.9</p><pre class="codeinput">Z = linspace(0.1,0.9,50);
+s = 0.01;   <span class="comment">% 1% settling time</span>
+</pre><p>Find the simulated and analytic rise time, settling time, and %overshoot</p><pre class="codeinput"><span class="keyword">for</span> i = 1:1:50
+   H=tf(Wn.^2, [1 2*Z(i)*Wn Wn.^2]);
+   Hinfo(i) = stepinfo(H);
+   Rtime(i) = Hinfo(i).RiseTime;  <span class="comment">%sim rise time</span>
+   Stime(i) = Hinfo(i).SettlingTime; <span class="comment">% sim settling time</span>
+   Overshoot(i) = Hinfo(i).Overshoot;   <span class="comment">%sim overshoot</span>
+   Rtime_calc(i) = (2.16 * Z(i) + 0.6)/Wn; <span class="comment">%analytic rise time</span>
+   Stime_calc(i) = (-1*log(s*sqrt(1-(Z(i)^2))))/(Z(i)*Wn);
+   Overshoot_calc(i) = 100*exp((-pi*Z(i))/(sqrt(1-Z(i)^2)));
+<span class="keyword">end</span>
+</pre><h2 id="13">Part A</h2><p>Plot simulated and analytic rise time verses Z</p><pre class="codeinput">figure(2);clf;
+plot(Z, Rtime, <span class="string">'--r'</span>);
+hold <span class="string">on</span>;
+plot(Z, Rtime_calc,<span class="string">'b'</span>);
+legend(<span class="string">'Simulated'</span>,<span class="string">'Analytic'</span>);
+xlabel(<span class="string">'Damping Factor, Z'</span>);
+ylabel(<span class="string">'Rise Time, seconds'</span>);
+title(<span class="string">'Effect of Z on simulated and analytic rise time'</span>);
+</pre><img vspace="5" hspace="5" src="HW2redo_03.png" style="width:560px;height:420px;" alt=""> <h2 id="14">Part B</h2><p>Plot simulated and analytic settling time versus Z</p><pre class="codeinput">figure(3);clf;
+plot(Z, Stime, <span class="string">'--r'</span>);
+hold <span class="string">on</span>;
+plot(Z, Stime_calc,<span class="string">'b'</span>);
+legend(<span class="string">'Simulated'</span>,<span class="string">'Analytic'</span>);
+xlabel(<span class="string">'Damping Factor, Z'</span>);
+ylabel(<span class="string">'Settling Time, seconds'</span>);
+title(<span class="string">'Effect of Z on simulated and analytic settling time'</span>);
+</pre><img vspace="5" hspace="5" src="HW2redo_04.png" style="width:560px;height:420px;" alt=""> <h2 id="15">Part C</h2><p>Plot simulated and analytic overshoot versus Z</p><pre class="codeinput">figure(4);clf;
+plot(Z, Overshoot, <span class="string">'--r'</span>);
+hold <span class="string">on</span>;
+plot(Z, Overshoot_calc,<span class="string">'b'</span>);
+legend(<span class="string">'Simulated'</span>,<span class="string">'Analytic'</span>);
+xlabel(<span class="string">'Damping Factor, Z'</span>);
+ylabel(<span class="string">'Overshoot, %'</span>);
+title(<span class="string">'Effect of Z on simulated and analytic % overshoot'</span>);
+</pre><img vspace="5" hspace="5" src="HW2redo_05.png" style="width:560px;height:420px;" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2017a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% ECE 414 Homework #2 Redo  
+% Josh Andrews
+
+%% Question 1
+% Analyze standard second order H(s) for Wn=100 and for Z=0.1, 0.5, and
+% 0.9.  Plot the step response.
+%%
+% Clean everything up before we start
+
+clear;
+clc;
+
+%%
+% First Set Wn to initial value of 100
+
+Wn = 100;
+figure(1); clf;
+
+%%
+% Now find the transfer function of H(s) for each Z by using a while loop. Also in the while loop plot the step response for each Z, set initially to 0.1
+
+%%
+% Also store the step response info for each Z
+
+Z = 0.1;
+i = 1;   % index variable for stepinfo
+
+while Z <= 0.9    
+    H=tf(Wn.^2, [1 2*Z*Wn Wn.^2]);
+    Hinfo(i) = stepinfo(H);
+    step(H);
+    hold on;
+    Z = Z + 0.4; % increment Z
+    i = i + 1;     
+end
+
+legend('Z = 0.1', 'Z = 0.4','Z = 0.9');
+title('Step response with constant Wn and three Z cases');
+
+%% 
+% Now compare the three cases using both the plot above and the step info
+% for each of the three cases shown below
+
+%%
+% Z = 0.1
+disp(Hinfo(1));
+
+%%
+% Z = 0.5
+disp(Hinfo(2));
+
+%%
+% Z = 0.9
+disp(Hinfo(3));
+
+%%
+% If Wn is held constant and Z is varied alters all of the step response
+% parameters.  Rise Time and Peak Time are both directly proportional to Z
+% while % Overshoot, Settling Time, and the Peak are inversly proportional.
+% The Settling Max also appeared to be inversely proportional however the
+% min seemed to follow a more parabolic curve.
+
+%% Question 2
+% Using the same H(s) and constant Wn = 100, let 0.1<=Z<=0.9
+
+Z = linspace(0.1,0.9,50);
+s = 0.01;   % 1% settling time
+%%
+% Find the simulated and analytic rise time, settling time, and %overshoot
+for i = 1:1:50
+   H=tf(Wn.^2, [1 2*Z(i)*Wn Wn.^2]);
+   Hinfo(i) = stepinfo(H);
+   Rtime(i) = Hinfo(i).RiseTime;  %sim rise time
+   Stime(i) = Hinfo(i).SettlingTime; % sim settling time
+   Overshoot(i) = Hinfo(i).Overshoot;   %sim overshoot
+   Rtime_calc(i) = (2.16 * Z(i) + 0.6)/Wn; %analytic rise time
+   Stime_calc(i) = (-1*log(s*sqrt(1-(Z(i)^2))))/(Z(i)*Wn);
+   Overshoot_calc(i) = 100*exp((-pi*Z(i))/(sqrt(1-Z(i)^2)));
+end 
+
+%% Part A
+% Plot simulated and analytic rise time verses Z
+
+figure(2);clf;
+plot(Z, Rtime, 'REPLACE_WITH_DASH_DASHr');
+hold on;
+plot(Z, Rtime_calc,'b');
+legend('Simulated','Analytic');
+xlabel('Damping Factor, Z');
+ylabel('Rise Time, seconds');
+title('Effect of Z on simulated and analytic rise time');
+
+%% Part B
+% Plot simulated and analytic settling time versus Z
+figure(3);clf;
+plot(Z, Stime, 'REPLACE_WITH_DASH_DASHr');
+hold on;
+plot(Z, Stime_calc,'b');
+legend('Simulated','Analytic');
+xlabel('Damping Factor, Z');
+ylabel('Settling Time, seconds');
+title('Effect of Z on simulated and analytic settling time');
+
+
+%% Part C
+% Plot simulated and analytic overshoot versus Z
+
+figure(4);clf;
+plot(Z, Overshoot, 'REPLACE_WITH_DASH_DASHr');
+hold on;
+plot(Z, Overshoot_calc,'b');
+legend('Simulated','Analytic');
+xlabel('Damping Factor, Z');
+ylabel('Overshoot, %');
+title('Effect of Z on simulated and analytic % overshoot');
+
+   
+
+##### SOURCE END #####
+--></body></html>
