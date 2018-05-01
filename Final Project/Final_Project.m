@@ -3,6 +3,7 @@
 
 %% Step One, Get the TF's in here and other variables needed
 % Need N,D,C equations, and most parameters (make data structure?)
+s = tf('s');
 
 % Make structure containing constant overall parameters (ie no motor stuff)
 d.Jp = 6.2e-6;          %pulley inertia
@@ -12,43 +13,38 @@ d.Ks = 25;              %position sensor gain (V/m)
 d.Rp = 0.0075;          %pulley radius (m)
 d.Jb = 1.0125e-6;       %belt inertia
 d.Mc = 0.150;           %nominal cartridge mass (kg)
+d.Jc = d.Mc * (d.Rp)^2; %nominal cartridge inertia
 
-%% Motor 1
+%% Find the Nominal plants
+% Need to do this for all for motors
 
-m(1).Jm = 5e-5;         %inertia 
-m(1).Bm = 3.0e-6;       %viscous friction
-m(1).R = 15;            %resistance
-m(1).L = 35e-3;         %inductance
-m(1).Kt = 0.275;        %nominal torque constant
+% Find Total inertia - motor inertia
+d.Jx = (d.Jp)*2 + d.Js + d.Jb + d.Jc;   %The constant part of inertia (only motor inertia change) when fixing Cartridge mass.
 
-%% Motor 2
+for m = 1:4
+    motor = MotorNum(m); % Choose one of the four available motors
+    % Inertia calculations
+    motor.Jsys = motor.Jm + d.Jx;   % Calculate total system inertia
+    
+    motor.Numerator = (d.Gv * motor.Ktnom * d.Ks * d.Rp)/(motor.L * motor.Jsys);
+    motor.sOneTerm = (motor.R/motor.L)+(motor.Bm/motor.Jsys);
+    motor.sZeroTerm = (((motor.Ktnom)^2)+ motor.R * motor.Bm)/(motor.L * motor.Jsys);
 
-m(2).Jm = 5.5e-5;
-m(2).Bm = 2.5e-6;
-m(2).R = 7;
-m(2).L = 25e-3;
-m(2).Kt = 0.175;
-
-%% Motor 3
-
-m(3).Jm = 4.5e-5;
-m(3).Bm = 3.0e-6;
-m(3).R = 8;
-m(3).L = 25e-3;
-m(3).Kt = 0.235;
-
-%% Motor 4
-
-m(4).Jm = 5.0e-5;
-m(4).Bm = 3.5e-6;
-m(4).R = 4;
-m(4).L = 7.5e-3;
-m(4).Kt = 0.125;
+    % Calculate plant transfer function
+    motor.G = motor.Numerator/(s*(s^2 + motor.sOneTerm * s + motor.sZeroTerm)); % Calculate plant transfer function
+    
+    % Save the data so we have it for later
+    Plant(m) = motor;
+    % Plot Root Locus of plant transfer function
+    figure(m); clf;
+    rlocus(Plant(m).G);
+end
 
 
-%% Step Two, Do Root Locus of Plants
+%% Step Two, Do Root Locus of Plants as Parameters Change
 % Plot change in poles as Kt and Mi change.  Mi=cartridge mass, Kt = motor
 % torque constant.
 
+d.Mrange = [50,100,150,200,250]./1000;
 
 %% Step Three, Start Looking at Controllers
