@@ -48,3 +48,17 @@ end
 d.Mrange = [50,100,150,200,250]./1000;
 
 %% Step Three, Start Looking at Controllers
+
+%% Our Reference Input
+% refer to diagram in notebook, 5/4/18 pg. 2
+u(1)=0;
+for i = 0:1:1000
+    if i < 200
+        u(i+1)= u(i+1)+1;    
+    elseif i > 700
+        u(i+1)= u(i+1)+1;
+    else
+        u(i+1) = 44;
+    end
+            
+end
