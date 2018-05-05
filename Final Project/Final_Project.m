@@ -3,6 +3,7 @@
 
 %% Step One, Get the TF's in here and other variables needed
 % Need N,D,C equations, and most parameters (make data structure?)
+clear all; clc;
 s = tf('s');
 
 % Make structure containing constant overall parameters (ie no motor stuff)
@@ -49,16 +50,32 @@ d.Mrange = [50,100,150,200,250]./1000;
 
 %% Step Three, Start Looking at Controllers
 
+
+
+
 %% Our Reference Input
 % refer to diagram in notebook, 5/4/18 pg. 2
-u(1)=0;
-for i = 0:1:1000
-    if i < 200
-        u(i+1)= u(i+1)+1;    
-    elseif i > 700
-        u(i+1)= u(i+1)+1;
-    else
-        u(i+1) = 44;
-    end
-            
-end
+
+
+
+
+
+% u=[];
+% for i = 0:7000
+%     if i < 2000
+%         u(i+1) = (0.44./(1+exp(-80*(i/10000)+6.5)));
+%         u(9000-i) = u(i+1);
+%     else
+%         u(i) = 0.44;
+%     end          
+% end
+% %u=u';
+% t=0:1e-4:0.8999;     % 1sec/10k points = 0.0001s sampling
+% 
+% figure(5);clf;
+% plot(t,u)
+
+% dont have the 1/s before input yet
+% [y,t] = lsim(Plant(1).G,u,t);
+% figure(6);clf;
+% plot(t,y)
