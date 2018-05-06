@@ -37,8 +37,8 @@ for m = 1:4
     % Save the data so we have it for later
     Plant(m) = motor;
     % Plot Root Locus of plant transfer function
-    figure(m); clf;
-    rlocus(Plant(m).G);
+%     figure(m+10); clf;
+%     rlocus(Plant(m).G);
 end
 
 
@@ -56,26 +56,105 @@ d.Mrange = [50,100,150,200,250]./1000;
 %% Our Reference Input
 % refer to diagram in notebook, 5/4/18 pg. 2
 
+T = [0 .1 .6 .675];
+F = 0.44;
+Type = 0;
+
+
+[fun,dfun,ifun] = spulse(T,F,Type);
+
+tfun = 0:0.001:0.9;
+pos = ifun(tfun);
+vel = fun(tfun);
+acc = dfun(tfun);
+% figure(10);clf;
+% plot(tfun,vel);
+% figure(11);clf;
+% plot(tfun,pos);
+
+%pidTuner(Plant(1).G,'PIDF');
+
+%% Test/Setup stuff
+C=30;
+L=C*Plant(1).G;
+
+% The basic plant (input/output at each end of -kt loop repectivly)
+Znum=(Plant(1).Ktnom)/(Plant(1).L*Plant(1).Jsys);
+Zden =(s^2 + (Plant(1).R/Plant(1).L)*s+(Plant(1).Bm/Plant(1).Jsys)*s+((Plant(1).Ktnom^2 + Plant(1).R*Plant(1).Bm)/(Plant(1).L*Plant(1).Jsys)));
+Z=Znum/Zden;
+
+
+Sys_tf=L/(1+L);      %whole system (position out)
+Vel_tf = d.Ks*C*Z*d.Gv*d.Rp/(1+L);
+Volt_tf = (C*d.Gv)/(1+L);
+Curr_tf = (C*d.Gv*(1/(Plant(1).L*s+Plant(1).R)))/(1+L);
+
+%% Position Response
+[Pos_act,tref]=lsim(Sys_tf,pos,tfun);
+figure(1);clf;
+plot(tref,Pos_act)
+hold on
+plot(tfun,pos)
+legend('Actual','Reference')
+title('Whole System')
+
+%% Voltage Response
+[Volt_act,tref]=lsim(Volt_tf,pos,tfun);
+figure(3);clf;
+plot(tref,Volt_act)
+title('Voltage')
+
+%% Current Response
+[Curr_act,tref]=lsim(Curr_tf,pos,tfun);
+figure(4);clf;
+plot(tref,Curr_act)
+title('Current')
+
+%% Velocity Response
+[Vel_act,tref]=lsim(Vel_tf,pos,tfun);
+figure(2);clf;
+plot(tref,Vel_act)
+title('better Xdot')
+
+%% Velocity Versus Position
+figure(6);clf;
+plot(pos,Vel_act)
 
 
 
 
-% u=[];
-% for i = 0:7000
-%     if i < 2000
-%         u(i+1) = (0.44./(1+exp(-80*(i/10000)+6.5)));
-%         u(9000-i) = u(i+1);
-%     else
-%         u(i) = 0.44;
-%     end          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+% figure(1);clf;
+% for i = 1:4
+%     [y,t] = lsim(Plant(i).G,pos,tfun);
+%     plot(t,y)
+%     hold on
+%     
 % end
-% %u=u';
-% t=0:1e-4:0.8999;     % 1sec/10k points = 0.0001s sampling
-% 
-% figure(5);clf;
-% plot(t,u)
+% legend('1','2','3','4')
 
-% dont have the 1/s before input yet
-% [y,t] = lsim(Plant(1).G,u,t);
-% figure(6);clf;
-% plot(t,y)
+

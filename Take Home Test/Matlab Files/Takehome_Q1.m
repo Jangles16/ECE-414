@@ -8,15 +8,15 @@ G = ece414planttf(6,10,.45);
 %% Plot root locus for all Alpha
 % will use to see where zeros can be placed
 
-% figure(1); clf;
-% for i = 0:.1:.9
-%     G = ece414planttf(6,10,i);
-%     rlocus(G)
-%     grid on
-%     axis([-20 0 -25 25]);
-%     hold on
-% end
-% legend(['alpha = ' num2str(0)],['alpha = ' num2str(.1)],['alpha = ' num2str(0.2)],['alpha = ' num2str(0.3)], ['alpha = ' num2str(0.4)], ['alpha = ' num2str(0.5)], ['alpha = ' num2str(0.6)], ['alpha = ' num2str(0.7)], ['alpha = ' num2str(0.8)], ['alpha = ' num2str(0.9)]);
+figure(1); clf;
+for i = 0:.1:.9
+    G = ece414planttf(6,10,i);
+    rlocus(G)
+    grid on
+    axis([-20 0 -25 25]);
+    hold on
+end
+legend(['alpha = ' num2str(0)],['alpha = ' num2str(.1)],['alpha = ' num2str(0.2)],['alpha = ' num2str(0.3)], ['alpha = ' num2str(0.4)], ['alpha = ' num2str(0.5)], ['alpha = ' num2str(0.6)], ['alpha = ' num2str(0.7)], ['alpha = ' num2str(0.8)], ['alpha = ' num2str(0.9)]);
 
 %% Set up PI controller
 % Need at least I, as we need pole at origin for ess=0, and both PD and PID are not realiziable due to the improper controller effort transfer function
