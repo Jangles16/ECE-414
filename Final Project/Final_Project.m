@@ -52,9 +52,9 @@ d.Mrange = [50,100,150,200,250]./1000;
 
 %% Our Reference Input
 % refer to diagram in notebook, 5/4/18 pg. 2
-T = [0 .1 .6 .675];
+T = [0 .08 .59 .67];
 F = 0.44;
-Type = 0;
+Type = 1;
 [fun,dfun,ifun] = spulse(T,F,Type);
 
 tfun = 0:0.0001:0.9;
@@ -98,14 +98,14 @@ Sys_tf = L/(1+L);      %whole system (position out)
 
 
 %% Voltage Transfer Function
-Volt_tf = (C*d.Gv*d.Ks)/(1+L);
+Volt_tf = (C*d.Gv)/(1+L);
 
 
 %% Current Transfer Function
-Curr_plant_num = (1/Plant(1).L)*(s+(Plant(1).Bm/Plant(1).Jsys));
-Curr_plant_den = s^2+((Plant(1).R/Plant(1).L)+(Plant(1).Bm/Plant(1).Jsys)) + ((((Plant(1).Ktnom)^2)+Plant(1).R*Plant(1).Bm)/(Plant(1).L*Plant(1).Jsys));
+Curr_plant_num = (d.Gv/Plant(1).L)*(s+(Plant(1).Bm/Plant(1).Jsys));
+Curr_plant_den = s^2+((Plant(1).R/Plant(1).L)+(Plant(1).Bm/Plant(1).Jsys))*s + ((((Plant(1).Ktnom)^2)+Plant(1).R*Plant(1).Bm)/(Plant(1).L*Plant(1).Jsys));
 Curr_tmp = Curr_plant_num/Curr_plant_den;
-Curr_tf = (C*d.Gv*Curr_tmp*d.Ks)/(1+L);
+Curr_tf = (C*Curr_tmp)/(1+L);
 
 
 %% Position Response v Time
@@ -152,11 +152,15 @@ hold on
 plot(xlim,[0.1 0.1],'--')   % max speed when hitting 26cm
 hold on
 plot(pos*100,vel*100,'r')   %% referece vel v pos
+hold on
+plot(xlim,[1.0001*44 1.0001*44])
+hold on
+plot(xlim,[.9999*44 .9999*44])
 hold off
 title('Velocity vs Position')
 xlabel('Position (cm)')
 ylabel('Velocity (cm/s)')
-
+xlim([0 27])
 
 %% Power Calculation and Plot
 
