@@ -3,7 +3,8 @@
 
 %% Step One, Get the TF's in here and other variables needed
 % Need N,D,C equations, and most parameters (make data structure?)
-clear all; clc;
+% clear all; clc; 
+clf;
 s = tf('s');
 
 % Make structure containing constant overall parameters (ie no motor stuff)
@@ -13,13 +14,10 @@ d.Gv = 5;               %Voltage amplifier gain (V/V)
 d.Ks = 25;              %position sensor gain (V/m)
 d.Rp = 0.0075;          %pulley radius (m)
 d.Jb = 1.0125e-6;       %belt inertia
-d.Mc = [0.050 0.150 0.250];           %nominal cartridge mass (kg)
+d.Mc = [0.050 0.250 0.250 0.050 0.150];           %cartridge mass (set up to get 4 meaningful TF combos and nominal plant)
 d.Jc = d.Mc * (d.Rp)^2; %nominal cartridge inertia
+d.Jx = (d.Jp)*2 + d.Js + d.Jb + d.Jc;   %The constant part of inertia (only motor inertia change) when fixing Cartridge mass.
 
-for i = 1:3
-    
-    d.Jx(i) = (d.Jp)*2 + d.Js + d.Jb + d.Jc(i);   %The constant part of inertia (only motor inertia change) when fixing Cartridge mass.
-end
 
 %% Find the Nominal plants
 % Need to do this for all for motors
@@ -28,20 +26,36 @@ for m = 1:4
     
     motor = MotorNum(m); % Choose one of the four available motors
     % Inertia calculations
-    motor.Jsys = motor.Jm + d.Jx(2);   % Calculate total system inertia
+    motor.Jsys = motor.Jm + d.Jx;   % Calculate total system inertia
     
-    motor.Numerator = (d.Gv * motor.Ktnom * d.Ks * d.Rp)/(motor.L * motor.Jsys);
-    motor.sOneTerm = (motor.R/motor.L)+(motor.Bm/motor.Jsys);
-    motor.sZeroTerm = (((motor.Ktnom)^2)+ motor.R * motor.Bm)/(motor.L * motor.Jsys);
-
-    % Calculate plant transfer function
-    motor.G = motor.Numerator/(s*(s^2 + motor.sOneTerm * s + motor.sZeroTerm)); % Calculate plant transfer function
+    % whole plant
+    Numerator = (d.Gv .* motor.Kt * d.Ks * d.Rp)./(motor.L .* motor.Jsys);
+    sOneTerm = (motor.R/motor.L)+(motor.Bm./motor.Jsys);
+    sZeroTerm = (((motor.Kt).^2)+ motor.R * motor.Bm)./(motor.L .* motor.Jsys);
+    
+    % Velocity
+    Znum =(motor.Kt)./(motor.L.*motor.Jsys);
+    Zden =(s^2 + (motor.R/motor.L)*s+(motor.Bm./motor.Jsys).*s+((motor.Kt.^2 + motor.R*motor.Bm)./(motor.L.*motor.Jsys)));
+    
+    % Current
+    Curr_plant_num = (d.Gv/motor.L)*(s+(motor.Bm./motor.Jsys));
+    Curr_plant_den = s^2+((motor.R/motor.L)+(motor.Bm./motor.Jsys))*s + ((((motor.Kt).^2)+motor.R*motor.Bm)./(motor.L.*motor.Jsys));
+    
+    % Calculate open loop transfer functions
+    for j = 1:5
+        motor.G(j) = Numerator(j)/(s*(s^2 + sOneTerm(j) * s + sZeroTerm(j))); % Calculate plant transfer function
+        Z(j) = Znum(j)/Zden(j);
+        motor.Vel(j) = d.Ks*Z(j)*d.Gv*d.Rp;
+        motor.Cur(j) = Curr_plant_num(j)/Curr_plant_den(j);
+        motor.Volt(j) = d.Gv;
+    end
     
     % Save the data so we have it for later
     Plant(m) = motor;
+    
     % Plot Root Locus of plant transfer function
-%     figure(m+10); clf;
-%     rlocus(Plant(m).G);
+    %figure(m+10); clf;
+	%rlocus(Plant(m).G);
 end
 
 
@@ -57,7 +71,7 @@ end
 % refer to diagram in notebook, 5/4/18 pg. 2
 T = [0 .08 .59 .67];
 F = 0.44;
-Type = 1;
+Type = 0;   % zero gives me less overshoot
 [fun,dfun,ifun] = spulse(T,F,Type);
 
 tfun = 0:0.0001:0.9;
@@ -80,7 +94,11 @@ acc = dfun(tfun);
 % have to look at. I'm thinking right now that Motor 1 with full ink and
 % high inertia will be the slowest to respond.
 
-C=20;   % P type to test output plots
+Co=pidtune(Plant(1).G(1),'PDF');
+tune=pidTuner(Plant(1).G(2),Co);
+waitfor(tune);
+
+%C=20;   % P type to test output plots
 
 %%% will need a method to find controller
 %%% Step is actually faster than ours, so need to experiment.  Also want to
@@ -89,95 +107,125 @@ C=20;   % P type to test output plots
 
 
 
-%% Calculate Loop TF
+%% Calculate Closed Loop TFs
+
 for i=1:4
-    L=C*Plant(i).G;
-
-
-    %% Velocity Transfer Function
-    % The basic plant (input/output at each end of -kt loop repectivly) is Z
-    Znum=(Plant(i).Ktnom)/(Plant(i).L*Plant(i).Jsys);
-    Zden =(s^2 + (Plant(i).R/Plant(i).L)*s+(Plant(i).Bm/Plant(i).Jsys)*s+((Plant(i).Ktnom^2 + Plant(i).R*Plant(i).Bm)/(Plant(i).L*Plant(i).Jsys)));
-    Z=Znum/Zden;
-
-    Plant(i).Vel_tf = d.Ks*C*Z*d.Gv*d.Rp/(1+L);
-
-
-    %% System Transfer Function
-    Plant(i).Sys_tf = L/(1+L);      %whole system (position out)
-
-
-    %% Voltage Transfer Function
-    Plant(i).Volt_tf = (C*d.Gv)/(1+L);
-
-
-    %% Current Transfer Function
-    Curr_plant_num = (d.Gv/Plant(i).L)*(s+(Plant(i).Bm/Plant(i).Jsys));
-    Curr_plant_den = s^2+((Plant(i).R/Plant(i).L)+(Plant(i).Bm/Plant(i).Jsys))*s + ((((Plant(i).Ktnom)^2)+Plant(i).R*Plant(i).Bm)/(Plant(i).L*Plant(i).Jsys));
-    Curr_tmp = Curr_plant_num/Curr_plant_den;
-    Plant(i).Curr_tf = (C*Curr_tmp)/(1+L);
+    for j = 1:5
+        L=C*Plant(i).G(j);
+        Plant(i).Vel_tf(j) = C*Plant(i).Vel(j)/(1+L);      %Velocity TF
+        Plant(i).Sys_tf(j) = L/(1+L);                   %System TF
+        Plant(i).Volt_tf(j) = (C*Plant(i).Volt(j))/(1+L);  %Voltage TF
+        Plant(i).Cur_tf(j) = (C*Plant(i).Cur(j))/(1+L);   %Current TF
+    end
 end
 
 
 %% Position Response v Time
-% figure(1);clf;
-% for i=1:4
-%     [Pos_act,tref]=lsim(Plant(i).Sys_tf,pos,tfun);
-%     plot(tref,Pos_act)
-%     hold on
-%     
-% end
-% plot(tfun,pos)      %variables from spluse function
-% legend('1','2','3','4','ref')
-% title('Whole System')
 
-% %% Voltage Response v Time
-% [Volt_act,tref]=lsim(Volt_tf,pos,tfun);
-% figure(3);clf;
-% plot(tref,Volt_act)
-% title('Voltage')
-% 
-% 
-% %% Current Response v Time
-% [Curr_act,tref]=lsim(Curr_tf,pos,tfun);
-% figure(4);clf;
-% plot(tref,Curr_act)
-% title('Current')
-% 
-% 
-% %% Velocity Response v Time
-
-% figure(2);clf;
-% plot(tref,Vel_act)
-% title('better Xdot')
-% 
-% 
-%% Velocity Versus Position
-figure(6);clf;
 for i=1:4
-    [Vel_act,tref]=lsim(Plant(i).Vel_tf,pos,tfun);
-    plot(pos*100,Vel_act*100)
-    hold on
+    figure(i)
+    for j=1:5
+
+        [Pos_act,tref]=lsim(Plant(i).Sys_tf(j),pos,tfun);
+        plot(tref*1000,Pos_act*100)
+        hold on
+
+    end
+    plot(tfun*1000,pos*100)      %variables from spluse function
+    hold off
+    legend('LL','HH','LH','HL','NOM','REF')
+    title('Whole System Response')
+    xlabel('Time (msec)')
+    ylabel('Position (cm)')
 end
-legend('1','2','3','4')
-plot([2 2],ylim,'--');      % 2cm edge
-hold on
-plot([24 24],ylim,'--');    % 24cm edge
-hold on
-plot([26 26],ylim,'--')     % opp. pos limit
-hold on
-plot(xlim,[0.1 0.1],'--')   % max speed when hitting 26cm
-hold on
-plot(pos*100,vel*100,'r')   %% referece vel v pos
-hold on
-plot(xlim,[1.0001*44 1.0001*44])
-hold on
-plot(xlim,[.9999*44 .9999*44])
-hold off
-title('Velocity vs Position')
-xlabel('Position (cm)')
-ylabel('Velocity (cm/s)')
-xlim([0 27])
+
+
+%% Voltage Response v Time
+for i=1:4
+    figure(i+4)
+    for j=1:5
+
+        [Volt_act,tref]=lsim(Plant(i).Volt_tf(j),pos,tfun);
+        plot(tref*1000,Volt_act)
+        hold on
+
+    end
+    %plot(tfun,pos)      %variables from spluse function
+    hold off
+    legend('LL','HH','LH','HL','NOM')
+    title('Voltage vs Time')
+    xlabel('Time (msec)')
+    ylabel('Voltage (V)')
+end
+ 
+%% Current Response v Time
+for i=1:4
+    figure(i+8)
+    for j=1:5
+
+        [Cur_act,tref]=lsim(Plant(i).Cur_tf(j),pos,tfun);
+        plot(tref*1000,Cur_act)
+        hold on
+
+    end
+    %plot(tfun,pos)      %variables from spluse function
+    hold off
+    legend('LL','HH','LH','HL','NOM')
+    title('Current vs Time')
+    xlabel('Time (msec)')
+    ylabel('Current (A)')
+end
+ 
+%% Velocity Response v Time
+
+for i=1:4
+    figure(i+12)
+    for j=1:5
+
+        [Vel_act,tref]=lsim(Plant(i).Vel_tf(j),pos,tfun);
+        plot(tref*1000,Vel_act*100)
+        hold on
+    end
+    plot(tfun*1000,vel*100)      %variables from spluse function
+    hold off
+    legend('LL','HH','LH','HL','NOM','REF')
+    title('Velocity vs Time')
+    xlabel('Time (msec)')
+    ylabel('Velocity (cm/s)')
+end 
+%% Velocity Versus Position
+
+
+for i=1:4
+    figure(i+16)
+    for j=1:5
+
+        [Vel_act,tref]=lsim(Plant(i).Vel_tf(j),pos,tfun);
+        plot(pos*100,Vel_act*100)
+        hold on
+    end
+    legend('LL','HH','LH','HL','NOM')
+    plot([2 2],ylim,'--');      % 2cm edge
+    hold on
+    plot([24 24],ylim,'--');    % 24cm edge
+    hold on
+    plot([26 26],ylim,'--')     % opp. pos limit
+    hold on
+    plot(xlim,[0.1 0.1],'--')   % max speed when hitting 26cm
+    hold on
+%     plot(pos*100,vel*100,'r')   %% referece vel v pos
+%     hold on
+    plot(xlim,[1.0001*44 1.0001*44])
+    hold on
+    plot(xlim,[.9999*44 .9999*44])
+    hold off
+    title('Velocity vs Position')
+    xlabel('Position (cm)')
+    ylabel('Velocity (cm/s)')
+    xlim([0 27])
+
+end
+
 % 
 % %% Power Calculation and Plot
 % % probably don't have to plot this one, just need the max
