@@ -3,7 +3,7 @@
 
 %% Step One, Get the TF's in here and other variables needed
 % Need N,D,C equations, and most parameters (make data structure?)
-% clear all; clc; 
+clear all; clc; 
 clf;
 s = tf('s');
 
@@ -69,9 +69,9 @@ end
 
 %% Our Reference Input
 % refer to diagram in notebook, 5/4/18 pg. 2
-T = [0 .08 .59 .67];
+T = [0 .02 .56 .65];
 F = 0.44;
-Type = 0;   % zero gives me less overshoot
+Type = 1;   % zero gives me less overshoot
 [fun,dfun,ifun] = spulse(T,F,Type);
 
 tfun = 0:0.0001:0.9;
@@ -94,11 +94,16 @@ acc = dfun(tfun);
 % have to look at. I'm thinking right now that Motor 1 with full ink and
 % high inertia will be the slowest to respond.
 
-Co=pidtune(Plant(1).G(1),'PDF');
+Co=pidtune(Plant(3).G(1),'PDF');
 tune=pidTuner(Plant(1).G(2),Co);
 waitfor(tune);
 
-%C=20;   % P type to test output plots
+
+% Kp = 319.8;
+% Kd = 5.443;
+% Tf = 1.392e-5;
+% C = Kp + Kd * (s/(Tf*s + 1));
+
 
 %%% will need a method to find controller
 %%% Step is actually faster than ours, so need to experiment.  Also want to
