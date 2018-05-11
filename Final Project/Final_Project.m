@@ -14,7 +14,7 @@ d.Gv = 5;               %Voltage amplifier gain (V/V)
 d.Ks = 25;              %position sensor gain (V/m)
 d.Rp = 0.0075;          %pulley radius (m)
 d.Jb = 1.0125e-6;       %belt inertia
-d.Mc = [0.050 0.250 0.250 0.050 0.150];           %cartridge mass (set up to get 4 meaningful TF combos and nominal plant)
+d.Mc = [0.050 0.250 0.150];           %cartridge mass (set up to get 4 meaningful TF combos and nominal plant)
 d.Jc = d.Mc * (d.Rp)^2; %nominal cartridge inertia
 d.Jx = (d.Jp)*2 + d.Js + d.Jb + d.Jc;   %The constant part of inertia (only motor inertia change) when fixing Cartridge mass.
 
@@ -42,7 +42,7 @@ for m = 1:4
     Curr_plant_den = s^2+((motor.R/motor.L)+(motor.Bm./motor.Jsys))*s + ((((motor.Kt).^2)+motor.R*motor.Bm)./(motor.L.*motor.Jsys));
     
     % Calculate open loop transfer functions
-    for j = 1:5
+    for j = 1:3
         motor.G(j) = Numerator(j)/(s*(s^2 + sOneTerm(j) * s + sZeroTerm(j))); % Calculate plant transfer function
         Z(j) = Znum(j)/Zden(j);
         motor.Vel(j) = d.Ks*Z(j)*d.Gv*d.Rp;
@@ -58,6 +58,13 @@ for m = 1:4
 	%rlocus(Plant(m).G);
 end
 
+% figure(40);clf;
+% for i=1:4
+%     subplot(2,2,i)
+%     rlocus(Plant(i).G(3))
+%     str = sprintf('Root Locus Motor %d',i);
+%     title(str)
+% end
 
 %% Step Two, Do Root Locus of Plants as Parameters Change
 % Plot change in poles as Kt and Mi change.  Mi=cartridge mass, Kt = motor
@@ -69,15 +76,19 @@ end
 
 %% Our Reference Input
 % refer to diagram in notebook, 5/4/18 pg. 2
-T = [0 .02 .56 .65];
+T = [0 .08 .585 .675];
 F = 0.44;
-Type = 1;   % zero gives me less overshoot
-[fun,dfun,ifun] = spulse(T,F,Type);
+Type = 1;   % zero gives me less overshoot, 1 has less dicontinuities
+[fun,dfun,ifun] = spulse(T,F,Type);     %our reference inputs    
 
 tfun = 0:0.0001:0.9;
 pos = ifun(tfun);
 vel = fun(tfun);
 acc = dfun(tfun);
+% figure(500);clf;
+% plot(pos*100,vel*100)   %convert to cm and plot it
+% xlabel('Position (cm)')
+% ylabel('Velocity (cm/s)')
 
 
 %% Test Stuff
@@ -93,16 +104,21 @@ acc = dfun(tfun);
 % need to find out which plant setup to optimize for, might actually be several we
 % have to look at. I'm thinking right now that Motor 1 with full ink and
 % high inertia will be the slowest to respond.
+% 
+Kp = 319.8;
+Kd = 5.443;
+Tf = 1.392e-5;
+C = Kp + Kd * (s/(Tf*s + 1));
+%C=zpk(-105,-3000,3000);
+%C=20;
+% 
+%opt=pidtuneOptions('DesignFocus','reference-tracking');
+%C=pidtune(Plant(1).G(1),'PDF',opt);
+% tune=pidTuner(Plant(3).G(1),Co);
+% waitfor(tune);
 
-Co=pidtune(Plant(3).G(1),'PDF');
-tune=pidTuner(Plant(1).G(2),Co);
-waitfor(tune);
 
 
-% Kp = 319.8;
-% Kd = 5.443;
-% Tf = 1.392e-5;
-% C = Kp + Kd * (s/(Tf*s + 1));
 
 
 %%% will need a method to find controller
@@ -113,9 +129,8 @@ waitfor(tune);
 
 
 %% Calculate Closed Loop TFs
-
 for i=1:4
-    for j = 1:5
+    for j = 1:3
         L=C*Plant(i).G(j);
         Plant(i).Vel_tf(j) = C*Plant(i).Vel(j)/(1+L);      %Velocity TF
         Plant(i).Sys_tf(j) = L/(1+L);                   %System TF
@@ -124,129 +139,144 @@ for i=1:4
     end
 end
 
-
 %% Position Response v Time
 
-for i=1:4
-    figure(i)
-    for j=1:5
-
-        [Pos_act,tref]=lsim(Plant(i).Sys_tf(j),pos,tfun);
-        plot(tref*1000,Pos_act*100)
-        hold on
-
-    end
-    plot(tfun*1000,pos*100)      %variables from spluse function
-    hold off
-    legend('LL','HH','LH','HL','NOM','REF')
-    title('Whole System Response')
-    xlabel('Time (msec)')
-    ylabel('Position (cm)')
-end
+% for i=1:4
+%     figure(i)
+%     for j=1:3
+% 
+%         [Pos_act,tref]=lsim(Plant(i).Sys_tf(j),pos,tfun);
+%         plot(tref*1000,Pos_act*100)
+%         hold on
+% 
+%     end
+%     plot(tfun*1000,pos*100)      %variables from spluse function
+%     hold off
+%     legend('LL','HH','NOM','REF')
+%     title('Whole System Response')
+%     xlabel('Time (msec)')
+%     ylabel('Position (cm)')
+% end
 
 
 %% Voltage Response v Time
-for i=1:4
-    figure(i+4)
-    for j=1:5
+% for i=1:4
+%     figure(i+4)
+%     for j=1:3
+% 
+%         [Volt_act,tref]=lsim(Plant(i).Volt_tf(j),pos,tfun);
+%         [Cur_act,~]=lsim(Plant(i).Cur_tf(j),pos,tfun);
+%        
+%         Power_act = abs(Volt_act.*Cur_act);
+%         plot(tref, Power_act)
+%        
+%         
+%         hold on
+% 
+%     end
+%    % Plant(i).Volt_Act = Volt_act;
+%     %plot(tfun,pos)      %variables from spluse function
+%     hold off
+%     legend('LL','HH','NOM')
+%     title('Power v Time')
+%     xlabel('Time (s)')
+%     ylabel('Power (W)')
+%     title('Voltage vs Time')
+%     xlabel('Time (msec)')
+%     ylabel('Voltage (V)')
+% end
 
-        [Volt_act,tref]=lsim(Plant(i).Volt_tf(j),pos,tfun);
-        plot(tref*1000,Volt_act)
-        hold on
-
-    end
-    %plot(tfun,pos)      %variables from spluse function
-    hold off
-    legend('LL','HH','LH','HL','NOM')
-    title('Voltage vs Time')
-    xlabel('Time (msec)')
-    ylabel('Voltage (V)')
-end
  
 %% Current Response v Time
-for i=1:4
-    figure(i+8)
-    for j=1:5
-
-        [Cur_act,tref]=lsim(Plant(i).Cur_tf(j),pos,tfun);
-        plot(tref*1000,Cur_act)
-        hold on
-
-    end
-    %plot(tfun,pos)      %variables from spluse function
-    hold off
-    legend('LL','HH','LH','HL','NOM')
-    title('Current vs Time')
-    xlabel('Time (msec)')
-    ylabel('Current (A)')
-end
+% for i=1:4
+%     figure(i+8)
+%     for j=1:3
+% 
+%         [Cur_act,tref]=lsim(Plant(i).Cur_tf(j),pos,tfun);
+%         plot(tref*1000,Cur_act)
+%         Plant(i).Cur_Act(j) = Cur_act;
+%         hold on
+% 
+%     end
+%     %plot(tfun,pos)      %variables from spluse function
+%     hold off
+%     legend('LL','HH','NOM')
+%     title('Current vs Time')
+%     xlabel('Time (msec)')
+%     ylabel('Current (A)')
+% end
  
 %% Velocity Response v Time
 
-for i=1:4
-    figure(i+12)
-    for j=1:5
-
-        [Vel_act,tref]=lsim(Plant(i).Vel_tf(j),pos,tfun);
-        plot(tref*1000,Vel_act*100)
-        hold on
-    end
-    plot(tfun*1000,vel*100)      %variables from spluse function
-    hold off
-    legend('LL','HH','LH','HL','NOM','REF')
-    title('Velocity vs Time')
-    xlabel('Time (msec)')
-    ylabel('Velocity (cm/s)')
-end 
+% for i=1:4
+%     figure(i+12)
+%     for j=1:3
+% 
+%         [Vel_act,tref]=lsim(Plant(i).Vel_tf(j),pos,tfun);
+%         plot(tref*1000,Vel_act*100)
+%         hold on
+%     end
+%     plot(tfun*1000,vel*100)      %variables from spluse function
+%     hold off
+%     legend('LL','HH','NOM','REF')
+%     title('Velocity vs Time')
+%     xlabel('Time (msec)')
+%     ylabel('Velocity (cm/s)')
+% end 
 %% Velocity Versus Position
 
-
+figure(2);clf;
 for i=1:4
-    figure(i+16)
-    for j=1:5
+    subplot(2,2,i)
+    for j=1:3
 
         [Vel_act,tref]=lsim(Plant(i).Vel_tf(j),pos,tfun);
         plot(pos*100,Vel_act*100)
         hold on
     end
-    legend('LL','HH','LH','HL','NOM')
+    %legend('LL','HH','NOM')
     plot([2 2],ylim,'--');      % 2cm edge
     hold on
     plot([24 24],ylim,'--');    % 24cm edge
     hold on
     plot([26 26],ylim,'--')     % opp. pos limit
     hold on
-    plot(xlim,[0.1 0.1],'--')   % max speed when hitting 26cm
-    hold on
+    %plot(xlim,[0.1 0.1],'--')   % max speed when hitting 26cm
+    %hold on
 %     plot(pos*100,vel*100,'r')   %% referece vel v pos
 %     hold on
-    plot(xlim,[1.0001*44 1.0001*44])
-    hold on
-    plot(xlim,[.9999*44 .9999*44])
+    plot(xlim,[44 44])
+%     hold on
+%     plot(xlim,[.9999*44 .9999*44])
     hold off
-    title('Velocity vs Position')
+    str = sprintf('Velocity vs Position Motor %d',i);
+    title(str)
     xlabel('Position (cm)')
     ylabel('Velocity (cm/s)')
-    xlim([0 27])
+    %xlim([1 3])
+   % ylim([43 45])
 
 end
 
+
+%% Power Calculation and Plot
+% probably don't have to plot this one, just need the max
+
+% for i=1:4
+%     figure(i+20);clf;
 % 
-% %% Power Calculation and Plot
-% % probably don't have to plot this one, just need the max
-% 
-% figure(7);clf;
-% Power_act = abs(Volt_act.*Curr_act);
-% plot(tref, Power_act)
-% title('Power')
-% xlabel('Time (s)')
-% ylabel('Power (W)')
-% 
-% %% There are a few more plots requested
-% 
-% 
-% 
-% %% 
+%     Plant(i).Power_act = abs(Plant(i).Volt_act.*Plant(i).Curr_act);
+%     plot(tref, Power_act)
+%     title('Power')
+%     xlabel('Time (s)')
+%     ylabel('Power (W)')
+% end
+
+%% There are a few more plots requested
+
+
+
+%% 
 
 
 
